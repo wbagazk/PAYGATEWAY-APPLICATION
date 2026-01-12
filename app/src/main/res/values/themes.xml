@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.PGNotificationForwarder" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/btn_blue</item>
+
+        <item name="android:windowBackground">@color/bg_app</item>
+
+        <item name="android:statusBarColor">@color/bg_app</item>
+        <item name="android:windowLightStatusBar">true</item> </style>
+
+    <style name="Theme.PGNotificationForwarder" parent="Base.Theme.PGNotificationForwarder" />
+</resources>

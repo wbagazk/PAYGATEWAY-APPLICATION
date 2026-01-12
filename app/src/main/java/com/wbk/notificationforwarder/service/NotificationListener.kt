@@ -22,9 +22,25 @@ import retrofit2.Response
 
 class NotificationListener : NotificationListenerService() {
 
+    // === TAMBAHAN 1: JALANKAN FOREGROUND SERVICE SAAT LISTENER CONNECT ===
     override fun onListenerConnected() {
         super.onListenerConnected()
-        Log.e("PG_DEBUG", "=== SERVICE TERHUBUNG! ===")
+        Log.e("PG_DEBUG", "=== SERVICE LISTENER TERHUBUNG! ===")
+
+        // Menyalakan KeepAliveService agar aplikasi tidak dibunuh OS
+        val intent = Intent(this, KeepAliveService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    // (Opsional) Matikan KeepAlive jika listener putus/user mematikan izin
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        Log.e("PG_DEBUG", "=== SERVICE LISTENER TERPUTUS! ===")
+        // stopService(Intent(this, KeepAliveService::class.java))
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -33,12 +49,14 @@ class NotificationListener : NotificationListenerService() {
 
         val pkgName = sbn.packageName
         val session = SessionManager(applicationContext)
-        val historyManager = HistoryManager(applicationContext)
+        val historyManager = HistoryManager(applicationContext) // Pastikan file HistoryManager ada dari langkah sebelumnya
 
         // Ambil isi notifikasi
         val extras = sbn.notification.extras
         val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+
+        // Potong pesan untuk log agar rapi
         val shortMessage = if (text.length > 50) text.substring(0, 50) + "..." else text
 
         // 1. Cek Master Switch
@@ -46,11 +64,7 @@ class NotificationListener : NotificationListenerService() {
 
         // 2. Cek apakah masuk target
         val targetMap = session.getTargetMap()
-        if (!targetMap.containsKey(pkgName)) {
-            // Opsional: Log yang difilter tidak perlu disimpan agar tidak spam,
-            // atau simpan dengan status FILTERED jika ingin debug.
-            return
-        }
+        if (!targetMap.containsKey(pkgName)) return // Filter aplikasi non-target
 
         val category = targetMap[pkgName] ?: return
         val appName = getAppName(pkgName)
@@ -86,7 +100,7 @@ class NotificationListener : NotificationListenerService() {
                             val status = if (response.isSuccessful) "SUCCESS" else "FAILED"
                             val code = response.code()
 
-                            // Simpan Log
+                            // Simpan Log (Pastikan HistoryModel sudah ada)
                             val log = HistoryModel(
                                 appName = appName,
                                 message = shortMessage,
@@ -110,8 +124,6 @@ class NotificationListener : NotificationListenerService() {
                             )
                             historyManager.saveLog(log)
                             broadcastUpdate()
-
-                            Log.e("PG_API", "Failure: ${t.message}")
                         }
                     })
             } catch (e: Exception) {
@@ -123,6 +135,7 @@ class NotificationListener : NotificationListenerService() {
     private fun broadcastUpdate() {
         // Kirim sinyal ke MainActivity untuk refresh list log
         val intent = Intent("com.wbk.notificationforwarder.UPDATE_LOGS")
+        intent.setPackage(packageName) // Pastikan hanya diterima aplikasi sendiri
         sendBroadcast(intent)
     }
 

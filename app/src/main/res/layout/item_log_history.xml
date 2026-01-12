@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@color/white"
+    android:layout_marginBottom="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvLogAppName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nama Aplikasi"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvLogTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:00:00"
+            android:textSize="12sp"
+            android:textColor="@color/text_grey" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvLogMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Isi notifikasi..."
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="13sp"
+        android:textColor="@color/text_grey"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/tvLogStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="STATUS"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_status_box" />
+
+</LinearLayout>

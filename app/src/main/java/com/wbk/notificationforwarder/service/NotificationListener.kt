@@ -1,6 +1,7 @@
 package com.wbk.notificationforwarder.service
 
 import android.app.Notification
+import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
@@ -10,6 +11,8 @@ import com.wbk.notificationforwarder.SessionManager
 import com.wbk.notificationforwarder.api.ApiClient
 import com.wbk.notificationforwarder.model.NotificationRequest
 import com.wbk.notificationforwarder.utils.HashUtils
+import com.wbk.notificationforwarder.utils.HistoryManager
+import com.wbk.notificationforwarder.utils.HistoryModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,68 +22,51 @@ import retrofit2.Response
 
 class NotificationListener : NotificationListenerService() {
 
-    // Log saat service pertama kali jalan (terhubung)
     override fun onListenerConnected() {
         super.onListenerConnected()
-        Log.e("PG_DEBUG", "=== SERVICE TERHUBUNG! SIAP MEMBACA NOTIFIKASI ===")
-    }
-
-    // Log saat service putus
-    override fun onListenerDisconnected() {
-        super.onListenerDisconnected()
-        Log.e("PG_DEBUG", "=== SERVICE TERPUTUS! ===")
+        Log.e("PG_DEBUG", "=== SERVICE TERHUBUNG! ===")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-
         if (sbn == null) return
 
         val pkgName = sbn.packageName
-        Log.e("PG_DEBUG", "1. Ada Notif masuk dari: $pkgName") // <--- LOG PENTING
-
         val session = SessionManager(applicationContext)
+        val historyManager = HistoryManager(applicationContext)
+
+        // Ambil isi notifikasi
+        val extras = sbn.notification.extras
+        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
+        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        val shortMessage = if (text.length > 50) text.substring(0, 50) + "..." else text
 
         // 1. Cek Master Switch
-        if (!session.isServiceActive()) {
-            Log.e("PG_DEBUG", "   -> Ditolak: Layanan Master Switch dimatikan user.")
-            return
-        }
+        if (!session.isServiceActive()) return
 
-        // 2. Cek Login
-        val apiId = session.getApiId()
-        val apiKey = session.getApiKey()
-        if (apiId == null || apiKey == null) {
-            Log.e("PG_DEBUG", "   -> Ditolak: User belum login.")
-            return
-        }
-
-        // 3. Cek App Target
+        // 2. Cek apakah masuk target
         val targetMap = session.getTargetMap()
-        Log.e("PG_DEBUG", "   -> Daftar Target di HP: ${targetMap.keys}") // Cek apakah list target kosong?
-
         if (!targetMap.containsKey(pkgName)) {
-            Log.e("PG_DEBUG", "   -> Ditolak: $pkgName tidak ada dalam daftar target.")
+            // Opsional: Log yang difilter tidak perlu disimpan agar tidak spam,
+            // atau simpan dengan status FILTERED jika ingin debug.
             return
         }
 
         val category = targetMap[pkgName] ?: return
-        Log.e("PG_DEBUG", "2. LOLOS SELEKSI! Mengirim $pkgName ($category) ke server...")
+        val appName = getAppName(pkgName)
 
-        // 4. Ekstrak Isi
-        val extras = sbn.notification.extras
-        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        val subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString() ?: ""
-        val fullMessage = "$title $text $subText"
-
-        // 5. Kirim ke Server
+        // Persiapan Kirim
+        val fullMessage = "$title $text"
         val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
         val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "UNKNOWN"
+        val apiId = session.getApiId() ?: ""
+        val apiKey = session.getApiKey() ?: ""
+
+        if (apiId.isEmpty() || apiKey.isEmpty()) return
 
         val request = NotificationRequest(
             app = pkgName,
-            app_name = getAppName(pkgName),
+            app_name = appName,
             notification = fullMessage,
             device_id = deviceId,
             device_name = deviceName,
@@ -91,21 +77,53 @@ class NotificationListener : NotificationListenerService() {
 
         val signature = HashUtils.createSignature(apiId, apiKey)
 
+        // Kirim ke API
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 ApiClient.instance.sendNotification(category, signature, request)
                     .enqueue(object : Callback<Any> {
                         override fun onResponse(call: Call<Any>, response: Response<Any>) {
-                            Log.e("PG_API", "SUKSES KIRIM! Server Response: ${response.code()}")
+                            val status = if (response.isSuccessful) "SUCCESS" else "FAILED"
+                            val code = response.code()
+
+                            // Simpan Log
+                            val log = HistoryModel(
+                                appName = appName,
+                                message = shortMessage,
+                                status = "$status ($code)",
+                                timestamp = System.currentTimeMillis(),
+                                httpCode = code
+                            )
+                            historyManager.saveLog(log)
+                            broadcastUpdate()
+
+                            Log.e("PG_API", "Result: $code")
                         }
+
                         override fun onFailure(call: Call<Any>, t: Throwable) {
-                            Log.e("PG_API", "GAGAL KIRIM: ${t.message}")
+                            // Simpan Log Gagal Koneksi
+                            val log = HistoryModel(
+                                appName = appName,
+                                message = "Error: ${t.message}",
+                                status = "FAILED (Network)",
+                                timestamp = System.currentTimeMillis()
+                            )
+                            historyManager.saveLog(log)
+                            broadcastUpdate()
+
+                            Log.e("PG_API", "Failure: ${t.message}")
                         }
                     })
             } catch (e: Exception) {
-                Log.e("PG_API", "ERROR: ${e.message}")
+                Log.e("PG_API", "Exception: ${e.message}")
             }
         }
+    }
+
+    private fun broadcastUpdate() {
+        // Kirim sinyal ke MainActivity untuk refresh list log
+        val intent = Intent("com.wbk.notificationforwarder.UPDATE_LOGS")
+        sendBroadcast(intent)
     }
 
     private fun getAppName(pkg: String): String {

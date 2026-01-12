@@ -21,17 +21,10 @@
             android:textSize="20sp"
             android:textColor="@color/primary_dark"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Forward notifikasi ke server"
-            android:textSize="14sp"
-            android:textColor="@color/text_grey"
-            android:layout_marginBottom="16dp"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
             <TextView
@@ -57,16 +50,58 @@
             android:id="@+id/btnMasterSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:text="Layanan: AKTIF"
             android:backgroundTint="@color/btn_blue"/>
     </LinearLayout>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Daftar Aplikasi Target"
+        android:padding="12dp"
+        android:textStyle="bold"
+        android:textColor="@color/text_grey"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAppList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
         android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Riwayat Log (Terbaru)"
+            android:textStyle="bold"
+            android:textColor="@color/text_grey"/>
+
+        <TextView
+            android:id="@+id/btnClearLog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hapus Log"
+            android:textSize="12sp"
+            android:textColor="@color/outline_red"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvLogList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.2"
+        android:background="#EEEEEE"
         android:clipToPadding="false"/>
 
 </LinearLayout>

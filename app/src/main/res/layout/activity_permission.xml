@@ -18,6 +18,7 @@
             android:textStyle="bold"
             android:textColor="@color/primary_dark"
             android:gravity="center_horizontal"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"/>
 
         <TextView
@@ -45,17 +46,17 @@
                 android:textStyle="bold"
                 android:textColor="@color/outline_red"
                 android:textSize="16sp"
-                android:gravity="center"
-                android:layout_marginBottom="12dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Cara pakai:\n1) Tekan tombol 'Buka Notification Access' di bawah.\n2) Cari dan Izinkan 'PG Notification Forwarder'.\n3) Jika muncul 'Setelan terbatas':\n   -- Buka Settings HP -> Apps\n   -- Pilih PG Notification Forwarder\n   -- Klik menu (titik tiga) -> 'Izinkan setelan terbatas'\n4) Kembali ke sini, tekan tombol Buka lagi.\n5) Jika status sudah 'Diizinkan', tekan Lanjut."
-                android:textColor="@color/black"
-                android:lineSpacingExtra="4dp"
-                android:textSize="13sp"/>
+                android:gravity="center"/>
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cara pakai:\n1) Tekan tombol 'Buka Notification Access' di bawah.\n2) Cari dan Izinkan 'PG Notification Forwarder'.\n3) Jika muncul 'Setelan terbatas':\n   -- Buka Settings HP -> Apps\n   -- Pilih PG Notification Forwarder\n   -- Klik menu (titik tiga) -> 'Izinkan setelan terbatas'\n4) Kembali ke sini, tekan tombol Buka lagi.\n5) Jika status sudah 'Diizinkan', tekan Lanjut."
+            android:textColor="@color/black"
+            android:lineSpacingExtra="4dp"
+            android:textSize="13sp"
+            android:layout_marginBottom="16dp"/>
 
         <Button
             android:id="@+id/btnOpenSettings"

@@ -44,15 +44,12 @@ data class LoginRequest(
 
 // Wadah untuk Kirim Notifikasi
 data class NotificationRequest(
-    @SerializedName("app") val app: String,
-    @SerializedName("app_name") val app_name: String,
-    @SerializedName("notification") val notification: String,
-    @SerializedName("device_id") val device_id: String,
-    @SerializedName("device_name") val device_name: String,
-    @SerializedName("timestamp") val timestamp: Long,
-
-    @SerializedName("apiId") val apiId: String,
-
-    // PENTING: Mengunci nama field jadi "apikey" agar tidak tertukar/typo
-    @SerializedName("apiKey") val apiKey: String
+    val app: String,          // Package name
+    val app_name: String,     // Nama App
+    val notification: String, // Isi pesan
+    val device_id: String,
+    val device_name: String,
+    val timestamp: Long,
+    val apiId: String,
+    val apiKey: String
 )
